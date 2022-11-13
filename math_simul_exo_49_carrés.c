@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <time.h>
-#include <strings.h>
+#include <string.h>
 #include <math.h>
 
 #define GRID_SIZE 4
