@@ -8,7 +8,7 @@
 
 #define GRID_SIZE 4
 #define ITER 100000
-#define SAMPLE_SIZE 20000
+#define SAMPLE_SIZE 200
 
 uint8_t print_grid(uint8_t *grd);
 
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 
             // print_grid(grid);
 
-            for (uint8_t i = 0; i < 3; ++i)
+            for (uint8_t i = 0; i < 2; ++i)
                 update_grid();
 
             // print_grid(grid);
@@ -61,13 +61,21 @@ int main(int argc, char **argv)
 
     uint64_t num = 0;
 
-    // mean of data points
+    FILE *f = fopen("counts.log", "w");
+
+    fwrite(counts, sizeof(uint64_t), SAMPLE_SIZE, f);
+
+    // mean data points
     for (int i = 0; i < SAMPLE_SIZE; ++i)
+    {
         num += counts[i];
+        fprintf(f, "%" PRIu64 " ", counts[i]);
+    }
 
     double mean = (double)num / SAMPLE_SIZE;
 
-    // printf("la moyennes des valeur obtenues est de %f\n", mean);
+    printf("la moyennes des valeur obtenues est de %f\n", mean);
+    printf("La probalbilite moyenne que le carre 3 soit noir a la troisieme etape est de %f = %f%%\n", mean / ITER, mean / ITER * 100);
 
     double pt_dev[SAMPLE_SIZE];
 
@@ -87,6 +95,8 @@ int main(int argc, char **argv)
     double std_deviation = sqrt(numerator / SAMPLE_SIZE);
 
     printf("la deviation standart est de %f sigma", std_deviation);
+
+    fclose(f);
 
     return EXIT_SUCCESS;
 }

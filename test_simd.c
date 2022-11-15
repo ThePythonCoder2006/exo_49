@@ -20,16 +20,6 @@ static inline uint64_t prng_u64(prng_u64_state *const p)
   return state * UINT64_C(2685821657736338717);
 }
 
-typedef struct
-{
-  __m256i state;
-} prng_m256i_state;
-
-static inline __m256i prng_m256i(prng_m256i_state *const p)
-{
-  return state;
-}
-
 int main(int argc, char **argv)
 {
   srand(time(NULL));
