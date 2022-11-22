@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 
 		if (k % 100 == 99)
 		{
-			printf("%" PRIu64 "\n", k);
+			printf("%f\n", (double)k / SAMPLE_SIZE * 100.0);
 			QueryPerformanceCounter(&sample_end);
 			interval = (double)(sample_end.QuadPart - sample_start.QuadPart) / frequency.QuadPart;
 			fprintf(run_log, "sample %" PRIu64 "-%" PRIu64 ": %f\n", k - (k >= 100 ? 100 : k), k, interval);
