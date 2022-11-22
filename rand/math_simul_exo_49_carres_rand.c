@@ -5,11 +5,14 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
+#include <dirent.h>
+#include <windows.h>
 
 #define GRID_SIZE 4
-#define ITER 200000
-#define SAMPLE_SIZE 2
-#define LOGFILE "/logs"
+#define ITER 20000
+#define SAMPLE_SIZE 1000
+#define LOGFILE "logs"
+#define BUFF_SIZE 64
 
 uint8_t print_grid(uint8_t *grd);
 
@@ -20,63 +23,116 @@ uint8_t *grid = &(grid_arr[0]);
 
 int main(int argc, char **argv)
 {
-	--argc, ++argv;
+	// getting the run number to not overwrite the previous run
+	uint64_t run_count;
+
+	FILE *f = fopen("run_numb", "r");
+	if (f != NULL)
+		fread(&run_count, sizeof(run_count), 1, f);
+
+	fclose(f);
+
+	printf("%" PRIu64 "\n", run_count);
+
+	// update the run number
+	f = fopen("run_numb", "w");
+
+	++run_count;
+
+	printf("%" PRIu64 "\n", run_count);
+
+	fwrite(&run_count, sizeof(run_count), 1, f);
+
+	fclose(f);
+
+	// create a new dir to hold the log of the current run
+	char dir_name[BUFF_SIZE], file_name[BUFF_SIZE];
+	snprintf(dir_name, BUFF_SIZE, LOGFILE "/run %" PRIu64, run_count);
+	mkdir(dir_name);
+
+	strncpy(file_name, dir_name, BUFF_SIZE);
+	strcat(file_name, "/runlog.txt");
+	// file to save global data like time
+	FILE *run_log = fopen(file_name, "w");
+
+	fprintf(run_log, "####################################################\n"
+									 "THE LOG FILE OF THE RUN %" PRIu64 "\n"
+									 "####################################################\n"
+									 "CONFIG OF THIS RUN :\n"
+									 "ITER = %u\n"
+									 "SAMPLE_SIZE = %u\n"
+									 "####################################################\n"
+									 "SAMPLE TIMES :\n",
+					run_count, ITER, SAMPLE_SIZE);
+
+	// vars to measure the execution time
+	LARGE_INTEGER frequency;
+	LARGE_INTEGER run_start;
+	LARGE_INTEGER run_end;
+	LARGE_INTEGER sample_start;
+	LARGE_INTEGER sample_end;
+	double interval;
+
+	// I do not care about the args
+	(void)argc, (void)argv;
 
 	srand(time(NULL));
 
 	uint32_t counts[SAMPLE_SIZE] = {0};
 
-	for (int k = 0; k < SAMPLE_SIZE; ++k)
+	// start to mesure time of the whole run
+	QueryPerformanceFrequency(&frequency);
+	QueryPerformanceCounter(&run_start);
+
+	// repeat the exeperiment multiple times to calculate SD
+	for (uint64_t k = 0; k < SAMPLE_SIZE; ++k)
 	{
+		// a simple (and fast) way to check execution ((1 >> 7) - 1) = (128 - 1) = 127 = 0b00000000 00000000 00000000 01111111
+		// <=> k % 256 = 255
 		if (k % 100 == 0)
-			printf("%i\n", k);
+		{
+			// printf(">\n");
+			QueryPerformanceCounter(&sample_start);
+		}
 
 		for (uint64_t j = 0; j < ITER; ++j)
 		{
-			// printf("etape %i: \n", index);
-
-			// print_grid(grid);
 
 			grid[0] = 1;
 			grid[1] = 0;
 			grid[2] = 0;
 			grid[3] = 0;
 
-			// print_grid(grid);
-
 			for (uint8_t i = 0; i < 2; ++i)
 				update_grid();
 
-			// print_grid(grid);
-
 			if (grid[3] == 1)
 				++(counts[k]);
-
-			// printf("%i\n",count);
 		}
 
-		// printf("la proba que sla case 3 soit noir au bout de la 3eme etape est de : %" PRIu64 "\n", counts[k]);
+		if (k % 100 == 99)
+		{
+			printf("%" PRIu64 "\n", k);
+			QueryPerformanceCounter(&sample_end);
+			interval = (double)(sample_end.QuadPart - sample_start.QuadPart) / frequency.QuadPart;
+			fprintf(run_log, "sample %" PRIu64 "-%" PRIu64 ": %f\n", k - (k >= 100 ? 100 : k), k, interval);
+		}
 	}
 
-	uint64_t run_count = 0;
+	QueryPerformanceCounter(&run_end);
+	interval = (double)(run_end.QuadPart - run_start.QuadPart) / frequency.QuadPart;
+	fprintf(run_log, "the run took %fs to run\n", interval);
 
-	FILE *f = fopen("run_numb", "r");
-	if (f != NULL)
-		run_count = fread(&run_count, sizeof(run_count), 1, f);
+	// creating files for logging data
+	// creating the binary log file
+	strncpy(file_name, dir_name, BUFF_SIZE);
+	strcat(file_name, "/counts.log");
+	FILE *flogs = fopen(file_name, "w");
 
-	fclose(f);
-
-	f = fopen("run_numb", "w");
-
-	++run_count;
-
-	fwrite(&run_count, sizeof(run_count), 1, f);
-
-	fclose(f);
-
-	// openning files for logging data
-	FILE *flogs = fopen("counts.log", "w");
-	FILE *ftxt = fopen("counts.txt", "w");
+	// creating the text log file
+	strncpy(file_name, dir_name, BUFF_SIZE);
+	strcat(file_name, "/counts.txt");
+	FILE *ftxt = fopen(file_name, "w");
 
 	// calculating standart deviation
 
@@ -116,6 +172,8 @@ int main(int argc, char **argv)
 
 	fclose(flogs);
 	fclose(ftxt);
+
+	fclose(run_log);
 
 	return EXIT_SUCCESS;
 }
