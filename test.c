@@ -1,17 +1,49 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <immintrin.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
+#include <time.h>
+#include <string.h>
+#include <math.h>
+#include <dirent.h>
+#include <windows.h>
 
-__m256i ret();
+typedef struct xorshift_state
+{
+	uint64_t a;
+} xorshift_state;
+
+uint64_t bit4_xorshift(xorshift_state *s)
+{
+	uint64_t x = s->a;
+	x ^= x << 13;
+	x ^= x >> 7;
+	x ^= x << 17;
+	s->a = x;
+	return x;
+}
+
+xorshift_state *state;
+
+#define ITER 1000000000
 
 int main(int argc, char **argv)
 {
-    __m256i t = ret();
+	--argc, ++argv;
 
-    return EXIT_SUCCESS;
-}
+	state = malloc(sizeof(*state));
+	srand(time(NULL));
+	state->a = rand() + 1ULL;
 
-__m256i ret()
-{
-    return _mm256_set1_epi8(0);
+	uint64_t count = 0;
+
+	for (size_t i = 0; i < ITER; ++i)
+	{
+		if (bit4_xorshift(state) <= (UINT64_MAX / 10))
+			++count;
+	}
+
+	printf("%" PRIu64 ", %f\n", count, (double)count / ITER);
+
+	return EXIT_SUCCESS;
 }

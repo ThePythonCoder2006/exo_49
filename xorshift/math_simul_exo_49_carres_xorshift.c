@@ -9,8 +9,8 @@
 #include <windows.h>
 
 #define GRID_SIZE 4
-#define ITER 20000
-#define SAMPLE_SIZE 1000
+#define ITER 200000
+#define SAMPLE_SIZE 100000
 #define LOGFILE "logs"
 #define BUFF_SIZE 64
 
@@ -23,7 +23,7 @@ uint8_t print_grid(uint8_t *grd);
 
 uint8_t update_grid(void);
 
-uint8_t bit4_xorshift(xorshift_state *s);
+uint64_t xorshift64(xorshift_state *s);
 
 uint8_t grid_arr[GRID_SIZE] = {1, 0, 0, 0};
 uint8_t *grid = &(grid_arr[0]);
@@ -87,9 +87,8 @@ int main(int argc, char **argv)
 
 	srand(time(NULL));
 	state = malloc(sizeof(*state));
-	state->a = rand() + 1ULL;
-
-	printf("state : %" PRIu64 ", %u\n", state->a, rand() + 1ULL);
+	state->a = (rand() + 1ULL) << 16;
+	xorshift64(state);
 
 	uint32_t counts[SAMPLE_SIZE] = {0};
 
@@ -163,6 +162,7 @@ int main(int argc, char **argv)
 
 	// printf("la moyennes des valeur obtenues est de %f\n", mean);
 	printf("La probalbilite moyenne que le carre 3 soit noir a la troisieme etape est de %f = %f%%\n", mean / ITER, mean / ITER * 100);
+	fprintf(run_log, "mean : %f = %f%%\n", mean / ITER, mean / ITER * 100);
 
 	double pt_dev[SAMPLE_SIZE];
 
@@ -182,6 +182,7 @@ int main(int argc, char **argv)
 	double std_deviation = sqrt(numerator / SAMPLE_SIZE);
 
 	printf("la deviation standart est de %f = %f%%", std_deviation / ITER, std_deviation / ITER * 100);
+	fprintf(run_log, "SD : %f = %f%%\n", std_deviation / ITER, std_deviation / ITER * 100);
 
 	fclose(flogs);
 	fclose(ftxt);
@@ -210,24 +211,24 @@ uint8_t update_grid(void)
 
 	if (grid[0] || grid[3])
 	{
-		if (bit4_xorshift(state) & 1)
+		if (xorshift64(state) & 1)
 			new_grid[1] = 1;
 		else
 			new_grid[1] = 0;
 
-		if (bit4_xorshift(state) & 1)
+		if (xorshift64(state) & 1)
 			new_grid[2] = 1;
 		else
 			new_grid[2] = 0;
 	}
 	else
 	{
-		if ((bit4_xorshift(state) * 5) / 8)
+		if (xorshift64(state) <= (UINT64_MAX / 10))
 			new_grid[1] = 1;
 		else
 			new_grid[1] = 0;
 
-		if ((bit4_xorshift(state) * 5) / 8)
+		if (xorshift64(state) <= (UINT64_MAX / 10))
 			new_grid[2] = 1;
 		else
 			new_grid[2] = 0;
@@ -235,24 +236,24 @@ uint8_t update_grid(void)
 
 	if (grid[1] || grid[2])
 	{
-		if (bit4_xorshift(state) & 1)
+		if (xorshift64(state) & 1)
 			new_grid[0] = 1;
 		else
 			new_grid[0] = 0;
 
-		if (bit4_xorshift(state) & 1)
+		if (xorshift64(state) & 1)
 			new_grid[3] = 1;
 		else
 			new_grid[3] = 0;
 	}
 	else
 	{
-		if ((bit4_xorshift(state) * 5) / 8)
+		if (xorshift64(state) <= (UINT64_MAX / 10))
 			new_grid[0] = 1;
 		else
 			new_grid[0] = 0;
 
-		if ((bit4_xorshift(state) * 5) / 8)
+		if (xorshift64(state) <= (UINT64_MAX / 10))
 			new_grid[3] = 1;
 		else
 			new_grid[3] = 0;
@@ -273,12 +274,11 @@ uint8_t update_grid(void)
 	return 0;
 }
 
-uint8_t bit4_xorshift(xorshift_state *s)
+uint64_t xorshift64(xorshift_state *s)
 {
 	uint64_t x = s->a;
 	x ^= x << 13;
 	x ^= x >> 7;
 	x ^= x << 17;
-	s->a = x;
-	return (x >> 60);
+	return s->a = x;
 }

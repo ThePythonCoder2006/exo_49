@@ -9,8 +9,8 @@
 #include <windows.h>
 
 #define GRID_SIZE 4
-#define ITER 20000
-#define SAMPLE_SIZE 1000
+#define ITER 200000
+#define SAMPLE_SIZE 100000
 #define LOGFILE "logs"
 #define BUFF_SIZE 64
 
@@ -32,14 +32,10 @@ int main(int argc, char **argv)
 
 	fclose(f);
 
-	printf("%" PRIu64 "\n", run_count);
-
 	// update the run number
 	f = fopen("run_numb", "w");
 
 	++run_count;
-
-	printf("%" PRIu64 "\n", run_count);
 
 	fwrite(&run_count, sizeof(run_count), 1, f);
 
@@ -150,6 +146,7 @@ int main(int argc, char **argv)
 
 	// printf("la moyennes des valeur obtenues est de %f\n", mean);
 	printf("La probalbilite moyenne que le carre 3 soit noir a la troisieme etape est de %f = %f%%\n", mean / ITER, mean / ITER * 100);
+	fprintf(run_log, "mean : %f = %f%%\n", mean / ITER, mean / ITER * 100);
 
 	double pt_dev[SAMPLE_SIZE];
 
@@ -169,6 +166,7 @@ int main(int argc, char **argv)
 	double std_deviation = sqrt(numerator / SAMPLE_SIZE);
 
 	printf("la deviation standart est de %f = %f%%", std_deviation / ITER, std_deviation / ITER * 100);
+	fprintf(run_log, "SD : %f = %f%%\n", std_deviation / ITER, std_deviation / ITER * 100);
 
 	fclose(flogs);
 	fclose(ftxt);
