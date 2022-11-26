@@ -13,19 +13,19 @@ typedef struct xorshift_state
 	uint64_t a;
 } xorshift_state;
 
-uint64_t bit4_xorshift(xorshift_state *s)
+uint64_t xorshift(xorshift_state *s)
 {
 	uint64_t x = s->a;
 	x ^= x << 13;
 	x ^= x >> 7;
 	x ^= x << 17;
 	s->a = x;
-	return x;
+	return x * 0x2545F4914F6CDD1DULL;
 }
 
 xorshift_state *state;
 
-#define ITER 1000000000
+#define ITER 5000000
 
 int main(int argc, char **argv)
 {
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 
 	for (size_t i = 0; i < ITER; ++i)
 	{
-		if (bit4_xorshift(state) <= (UINT64_MAX / 10))
+		if (xorshift(state) <= (UINT64_MAX / 4 * 3))
 			++count;
 	}
 

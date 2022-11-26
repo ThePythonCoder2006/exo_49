@@ -9,8 +9,8 @@
 #include <windows.h>
 
 #define GRID_SIZE 4
-#define ITER 200000
-#define SAMPLE_SIZE 100000
+#define ITER 20000
+#define SAMPLE_SIZE 1000
 #define LOGFILE "logs"
 #define BUFF_SIZE 64
 
@@ -207,12 +207,12 @@ uint8_t update_grid(void)
 	}
 	else
 	{
-		if (rand() % 10 == 0)
+		if (rand() <= (RAND_MAX / 10))
 			new_grid[1] = 1;
 		else
 			new_grid[1] = 0;
 
-		if (rand() % 10 == 0)
+		if (rand() <= (RAND_MAX / 10))
 			new_grid[2] = 1;
 		else
 			new_grid[2] = 0;
@@ -232,12 +232,12 @@ uint8_t update_grid(void)
 	}
 	else
 	{
-		if (rand() % 10 == 0)
+		if (rand() <= (RAND_MAX / 10))
 			new_grid[0] = 1;
 		else
 			new_grid[0] = 0;
 
-		if (rand() % 10 == 0)
+		if (rand() <= (RAND_MAX / 10))
 			new_grid[3] = 1;
 		else
 			new_grid[3] = 0;

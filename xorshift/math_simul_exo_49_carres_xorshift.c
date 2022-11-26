@@ -9,8 +9,8 @@
 #include <windows.h>
 
 #define GRID_SIZE 4
-#define ITER 200000
-#define SAMPLE_SIZE 100000
+#define ITER 20000
+#define SAMPLE_SIZE 1000
 #define LOGFILE "logs"
 #define BUFF_SIZE 64
 
@@ -41,14 +41,10 @@ int main(int argc, char **argv)
 
 	fclose(f);
 
-	printf("%" PRIu64 "\n", run_count);
-
 	// update the run number
 	f = fopen("run_numb", "w");
 
 	++run_count;
-
-	printf("%" PRIu64 "\n", run_count);
 
 	fwrite(&run_count, sizeof(run_count), 1, f);
 
@@ -280,5 +276,6 @@ uint64_t xorshift64(xorshift_state *s)
 	x ^= x << 13;
 	x ^= x >> 7;
 	x ^= x << 17;
-	return s->a = x;
+	s->a = x;
+	return x * 0x2545F4914F6CDD1DULL;
 }
